@@ -1,0 +1,43 @@
+feature,description,source,leakage_control
+prior_1w_avg_offense_snaps,Mean offense_snaps over up to 1 prior played weeks; current week excluded.,snap_counts,shift(1) within player and season
+prior_2w_avg_offense_snaps,Mean offense_snaps over up to 2 prior played weeks; current week excluded.,snap_counts,shift(1) within player and season
+prior_4w_avg_offense_snaps,Mean offense_snaps over up to 4 prior played weeks; current week excluded.,snap_counts,shift(1) within player and season
+prior_1w_avg_offense_pct,Mean offense_pct over up to 1 prior played weeks; current week excluded.,snap_counts,shift(1) within player and season
+prior_2w_avg_offense_pct,Mean offense_pct over up to 2 prior played weeks; current week excluded.,snap_counts,shift(1) within player and season
+prior_4w_avg_offense_pct,Mean offense_pct over up to 4 prior played weeks; current week excluded.,snap_counts,shift(1) within player and season
+prior_1w_avg_defense_snaps,Mean defense_snaps over up to 1 prior played weeks; current week excluded.,snap_counts,shift(1) within player and season
+prior_2w_avg_defense_snaps,Mean defense_snaps over up to 2 prior played weeks; current week excluded.,snap_counts,shift(1) within player and season
+prior_4w_avg_defense_snaps,Mean defense_snaps over up to 4 prior played weeks; current week excluded.,snap_counts,shift(1) within player and season
+prior_1w_avg_defense_pct,Mean defense_pct over up to 1 prior played weeks; current week excluded.,snap_counts,shift(1) within player and season
+prior_2w_avg_defense_pct,Mean defense_pct over up to 2 prior played weeks; current week excluded.,snap_counts,shift(1) within player and season
+prior_4w_avg_defense_pct,Mean defense_pct over up to 4 prior played weeks; current week excluded.,snap_counts,shift(1) within player and season
+prior_1w_avg_carries,Mean carries over up to 1 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_2w_avg_carries,Mean carries over up to 2 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_4w_avg_carries,Mean carries over up to 4 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_1w_avg_rushing_yards,Mean rushing_yards over up to 1 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_2w_avg_rushing_yards,Mean rushing_yards over up to 2 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_4w_avg_rushing_yards,Mean rushing_yards over up to 4 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_1w_avg_receptions,Mean receptions over up to 1 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_2w_avg_receptions,Mean receptions over up to 2 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_4w_avg_receptions,Mean receptions over up to 4 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_1w_avg_targets,Mean targets over up to 1 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_2w_avg_targets,Mean targets over up to 2 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_4w_avg_targets,Mean targets over up to 4 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_1w_avg_receiving_yards,Mean receiving_yards over up to 1 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_2w_avg_receiving_yards,Mean receiving_yards over up to 2 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_4w_avg_receiving_yards,Mean receiving_yards over up to 4 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_1w_avg_completions,Mean completions over up to 1 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_2w_avg_completions,Mean completions over up to 2 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_4w_avg_completions,Mean completions over up to 4 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_1w_avg_attempts,Mean attempts over up to 1 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_2w_avg_attempts,Mean attempts over up to 2 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_4w_avg_attempts,Mean attempts over up to 4 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_1w_avg_passing_yards,Mean passing_yards over up to 1 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_2w_avg_passing_yards,Mean passing_yards over up to 2 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_4w_avg_passing_yards,Mean passing_yards over up to 4 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_1w_avg_sacks_suffered,Mean sacks_suffered over up to 1 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_2w_avg_sacks_suffered,Mean sacks_suffered over up to 2 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_4w_avg_sacks_suffered,Mean sacks_suffered over up to 4 prior played weeks; current week excluded.,weekly_stats,shift(1) within player and season
+prior_1w_injury_reports,Count of injury-report appearances over up to 1 prior weeks.,injuries,shift(1) within player and season
+prior_2w_injury_reports,Count of injury-report appearances over up to 2 prior weeks.,injuries,shift(1) within player and season
+prior_4w_injury_reports,Count of injury-report appearances over up to 4 prior weeks.,injuries,shift(1) within player and season
