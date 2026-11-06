@@ -17,6 +17,10 @@ data/*
 !data/.gitkeep
 results/*
 !results/.gitkeep
+!results/nfl/
+!results/nfl/**/
+!results/nfl/**/*.csv
+!results/nfl/**/*.json
 visualizations/*
 !visualizations/.gitkeep
 

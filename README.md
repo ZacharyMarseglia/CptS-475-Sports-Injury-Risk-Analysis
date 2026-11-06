@@ -92,3 +92,38 @@ the saved `data_profile.json` to confirm the selected features.
 Generated data and outputs are ignored by Git so private or large datasets are
 not accidentally committed. Add only intentionally shareable artifacts.
 
+## NFL data pipeline (Zach — NFL Data Lead)
+
+This contribution only collects, cleans, integrates, and engineers historical
+NFL features. It does not train models or perform clustering.
+
+The pipeline downloads official nflverse release assets for injury reports,
+snap counts, and weekly player statistics. It also uses the nflverse players
+file as the required PFR-to-GSIS ID crosswalk. Run the default 2024 pipeline:
+
+```bash
+python -m src.nfl.run_pipeline --season 2024
+pytest -q
+```
+
+Use `--force-download` to refresh cached source files, or `--skip-download`
+for an offline rerun after the files have been downloaded. Other seasons use
+the same command with a different `--season` value when nflverse has published
+all three season assets.
+
+Large raw, cleaned, model-ready, and unmatched-review CSVs are written beneath
+`data/` and intentionally ignored by Git. Small reproducibility reports are
+written to `results/nfl/<season>/`:
+
+- `data_quality_summary.json`
+- `missing_value_report.csv`
+- `join_match_statistics.csv`
+- `feature_dictionary.csv`
+
+`nfl_cleaned.csv` retains current-week workload and injury-report information
+for audit and EDA. `nfl_model_ready.csv` contains only lagged workload and prior
+injury-report features for prediction, so current-week information is not used
+as a predictor. An injury-report appearance is explicitly not labeled as a
+confirmed injury. Rest days are omitted because the selected source files do
+not contain real game dates.
+
