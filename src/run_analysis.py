@@ -34,6 +34,90 @@ from sklearn.tree import DecisionTreeClassifier
 
 from src.features import add_engineered_features
 
+MODEL_DEFAULTS = {
+    "logistic_regression": {
+        "C": 1.0, "max_iter": 2000, "class_weight": "balanced",
+    },
+    "decision_tree": {
+        "max_depth": None, "min_samples_leaf": 1, "min_samples_split": 2,
+        "ccp_alpha": 0.0, "class_weight": "balanced",
+    },
+    "random_forest": {
+        "n_estimators": 300, "max_depth": None, "min_samples_leaf": 1,
+        "min_samples_split": 2, "max_features": "sqrt",
+        "class_weight": "balanced", "n_jobs": -1,
+    },
+}
+
+
+def model_value(text: str) -> Any:
+    # CLI values may be numbers, strings, or none/null.
+    if text.lower() == "none":
+        return None
+    try:
+        return json.loads(text)
+    except ValueError:
+        return text
+
+
+def validate_model_options(model: str, options: dict[str, Any]) -> None:
+    for key, value in options.items():
+        name = f"{model}.{key}"
+        if key in {"max_depth", "max_iter", "n_estimators",
+                   "min_samples_leaf", "min_samples_split"}:
+            if key == "max_depth" and value is None:
+                continue
+            minimum = 2 if key == "min_samples_split" else 1
+            if type(value) is not int or value < minimum:
+                raise ValueError(f"{name}: expected integer >= {minimum}")
+        elif key in {"C", "ccp_alpha"}:
+            if (type(value) not in (int, float)
+                    or not float("-inf") < value < float("inf")
+                    or (value <= 0 if key == "C" else value < 0)):
+                raise ValueError(f"{name}: expected finite {'positive' if key == 'C' else 'nonnegative'} number")
+        elif key == "class_weight":
+            allowed = [None, "balanced"]
+            if model == "random_forest":
+                allowed.append("balanced_subsample")
+            if value not in allowed:
+                raise ValueError(f"{name}: expected one of {allowed}")
+        elif key == "max_features":
+            if not (value is None or value in ("sqrt", "log2")
+                    or (type(value) is int and value >= 1)
+                    or (type(value) is float and 0 < value <= 1)):
+                raise ValueError(f"{name}: expected sqrt, log2, null, positive integer, or fraction in (0, 1]")
+        elif key == "n_jobs":
+            if type(value) is not int or value == 0:
+                raise ValueError(f"{name}: expected nonzero integer")
+
+
+def load_model_options(path: Path | None) -> dict[str, dict[str, Any]]:
+    models = {name: defaults.copy() for name, defaults in MODEL_DEFAULTS.items()}
+    if path is None:
+        return models
+
+    with path.open(encoding="utf-8") as file:
+        config = json.load(file)
+    if not isinstance(config, dict):
+        raise ValueError("Config must be a JSON object")
+    unknown = config.keys() - {"models"}
+    if unknown:
+        raise ValueError(f"Unknown config keys: {sorted(unknown)}")
+    file_models = config.get("models", {})
+    if not isinstance(file_models, dict):
+        raise ValueError("models must be a JSON object")
+
+    for name, options in file_models.items():
+        if name not in models:
+            raise ValueError(f"Unknown model: {name}")
+        if not isinstance(options, dict):
+            raise ValueError(f"{name} must be a JSON object")
+        unknown = options.keys() - models[name].keys()
+        if unknown:
+            raise ValueError(f"Unknown options for {name}: {sorted(unknown)}")
+        models[name].update(options)
+    return models
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -44,7 +128,78 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--random-state", type=int, default=42)
     parser.add_argument("--results-dir", type=Path, default=Path("results"))
     parser.add_argument("--visualizations-dir", type=Path, default=Path("visualizations"))
-    return parser.parse_args()
+    parser.add_argument("--config", type=Path, help="Optional JSON config file")
+    parser.add_argument("--lr-c", help="Regularization parameter")
+    parser.add_argument("--lr-max-iter", help="Maximum iterations")
+    parser.add_argument("--lr-class-weight", help="balanced or none")
+    parser.add_argument("--dt-max-depth", help="Maximum depth or none")
+    parser.add_argument("--dt-min-samples-leaf", help="Minimum samples per leaf")
+    parser.add_argument("--dt-min-samples-split", help="Minimum samples to split")
+    parser.add_argument("--dt-ccp-alpha", help="Pruning parameter")
+    parser.add_argument("--dt-class-weight", help="balanced or none")
+    parser.add_argument("--rf-n-estimators", help="Number of trees")
+    parser.add_argument("--rf-max-depth", help="Maximum depth or none")
+    parser.add_argument("--rf-min-samples-leaf", help="Minimum samples per leaf")
+    parser.add_argument("--rf-min-samples-split", help="Minimum samples to split")
+    parser.add_argument("--rf-max-features", help="Features considered per split")
+    parser.add_argument("--rf-class-weight", help="balanced, balanced_subsample, or none")
+    parser.add_argument("--rf-n-jobs", help="Number of parallel jobs")
+
+    args = parser.parse_args()
+    try:
+        args.models = load_model_options(args.config)
+
+        if args.lr_c is not None:
+            args.models["logistic_regression"]["C"] = model_value(args.lr_c)
+
+        if args.lr_max_iter is not None:
+            args.models["logistic_regression"]["max_iter"] = model_value(args.lr_max_iter)
+
+        if args.lr_class_weight is not None:
+            args.models["logistic_regression"]["class_weight"] = model_value(args.lr_class_weight)
+
+        if args.dt_max_depth is not None:
+            args.models["decision_tree"]["max_depth"] = model_value(args.dt_max_depth)
+
+        if args.dt_min_samples_leaf is not None:
+            args.models["decision_tree"]["min_samples_leaf"] = model_value(args.dt_min_samples_leaf)
+
+        if args.dt_min_samples_split is not None:
+            args.models["decision_tree"]["min_samples_split"] = model_value(args.dt_min_samples_split)
+
+        if args.dt_ccp_alpha is not None:
+            args.models["decision_tree"]["ccp_alpha"] = model_value(args.dt_ccp_alpha)
+
+        if args.dt_class_weight is not None:
+            args.models["decision_tree"]["class_weight"] = model_value(args.dt_class_weight)
+
+        if args.rf_n_estimators is not None:
+            args.models["random_forest"]["n_estimators"] = model_value(args.rf_n_estimators)
+
+        if args.rf_max_depth is not None:
+            args.models["random_forest"]["max_depth"] = model_value(args.rf_max_depth)
+
+        if args.rf_min_samples_leaf is not None:
+            args.models["random_forest"]["min_samples_leaf"] = model_value(args.rf_min_samples_leaf)
+
+        if args.rf_min_samples_split is not None:
+            args.models["random_forest"]["min_samples_split"] = model_value(args.rf_min_samples_split)
+
+        if args.rf_max_features is not None:
+            args.models["random_forest"]["max_features"] = model_value(args.rf_max_features)
+
+        if args.rf_class_weight is not None:
+            args.models["random_forest"]["class_weight"] = model_value(args.rf_class_weight)
+
+        if args.rf_n_jobs is not None:
+            args.models["random_forest"]["n_jobs"] = model_value(args.rf_n_jobs)
+
+        for name, options in args.models.items():
+            validate_model_options(name, options)
+    except (OSError, ValueError) as error:
+        parser.error(str(error))
+
+    return args
 
 
 def json_value(value: Any) -> Any:
@@ -218,12 +373,32 @@ def main() -> None:
         X, y, test_size=args.test_size, random_state=args.random_state, stratify=y
     )
     models = {
-        "Logistic Regression": LogisticRegression(max_iter=2000, class_weight="balanced"),
-        "Decision Tree": DecisionTreeClassifier(random_state=args.random_state, class_weight="balanced"),
+        "Logistic Regression": LogisticRegression(
+            C=args.models["logistic_regression"]["C"],
+            max_iter=args.models["logistic_regression"]["max_iter"],
+            class_weight=args.models["logistic_regression"]["class_weight"],
+        ),
+        "Decision Tree": DecisionTreeClassifier(
+            random_state=args.random_state,
+            max_depth=args.models["decision_tree"]["max_depth"],
+            min_samples_leaf=args.models["decision_tree"]["min_samples_leaf"],
+            min_samples_split=args.models["decision_tree"]["min_samples_split"],
+            ccp_alpha=args.models["decision_tree"]["ccp_alpha"],
+            class_weight=args.models["decision_tree"]["class_weight"],
+        ),
         "Random Forest": RandomForestClassifier(
-            n_estimators=300, random_state=args.random_state, class_weight="balanced", n_jobs=-1
+            random_state=args.random_state,
+            n_estimators=args.models["random_forest"]["n_estimators"],
+            max_depth=args.models["random_forest"]["max_depth"],
+            min_samples_leaf=args.models["random_forest"]["min_samples_leaf"],
+            min_samples_split=args.models["random_forest"]["min_samples_split"],
+            max_features=args.models["random_forest"]["max_features"],
+            class_weight=args.models["random_forest"]["class_weight"],
+            n_jobs=args.models["random_forest"]["n_jobs"],
         ),
     }
+    with (args.results_dir / "run_config.json").open("w", encoding="utf-8") as file:
+        json.dump({"models": args.models}, file, indent=2)
     rows: list[dict[str, Any]] = []
     reports: dict[str, Any] = {}
     predictions = pd.DataFrame({"actual": y_test}, index=y_test.index)
