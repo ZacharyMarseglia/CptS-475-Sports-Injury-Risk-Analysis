@@ -28,6 +28,7 @@ def log_step(step_name, start_time):
     elapsed = time.perf_counter() - start_time
     print(f"[TIMING] {step_name}: {elapsed:.2f} seconds")
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Sports injury clustering pipeline")
     parser.add_argument("--data", required=True, type=Path)
@@ -127,7 +128,6 @@ def build_preprocessor(features):
         )
 
     return ColumnTransformer(transformers=transformers)
-
 
 
 def find_optimal_clusters(X, max_clusters, random_state):
@@ -326,6 +326,74 @@ def analyze_clusters(original_features, labels, injury_target, output_dir):
     return profiles, injury_summary
 
 
+def plot_cluster_heatmap(original_features, labels, output_dir, top_n=10):
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    numeric = original_features.select_dtypes(include=np.number).copy()
+
+    if numeric.shape[1] == 0:
+        return
+
+    numeric["cluster"] = labels
+
+    cluster_means = numeric.groupby("cluster").mean()
+
+    overall_mean = original_features.select_dtypes(include=np.number).mean()
+
+    overall_std = original_features.select_dtypes(include=np.number).std().replace(0, np.nan)
+
+    standardized = (cluster_means - overall_mean) / overall_std
+
+    standardized = standardized.replace([np.inf, -np.inf], np.nan).dropna(axis=1)
+
+    if standardized.empty:
+        return
+
+    feature_scores = standardized.var(axis=0)
+
+    selected_features = (feature_scores.sort_values(ascending=False).head(top_n).index)
+
+    heatmap_data = standardized[selected_features]
+
+    heatmap_data = heatmap_data[feature_scores[selected_features].sort_values(ascending=False).index]
+
+    feature_scores.sort_values(
+        ascending=False
+    ).to_csv(
+        output_dir / "cluster_feature_relevance.csv",
+        header=["relevance_score"],
+    )
+
+    fig, axis = plt.subplots(figsize=(10, max(6, len(heatmap_data.columns) * 0.5)))
+
+    sns.heatmap(
+        heatmap_data.T,
+        cmap="RdBu_r",
+        center=0,
+        annot=True,
+        fmt=".2f",
+        linewidths=0.5,
+        cbar_kws={"label": "Standard deviations from overall mean"},
+        ax=axis,
+    )
+
+    axis.set_title(
+        f"Top {len(selected_features)} Most Distinguishing Cluster Features",
+        fontsize=14,
+        fontweight="bold",
+    )
+
+    axis.set_xlabel("Cluster")
+    axis.set_ylabel("Features")
+
+    fig.tight_layout()
+    fig.savefig(output_dir / "cluster_feature_heatmap.png", dpi=160)
+
+    plt.close(fig)
+
+    print(f"[INFO] Heatmap generated using {len(selected_features)} features.")
+
 
 def main():
 
@@ -477,6 +545,8 @@ def main():
         silhouette_scores,
         args.results_dir / "cluster_visualizations",
     )
+
+    plot_cluster_heatmap(X, labels, args.results_dir / "cluster_visualizations")
 
     log_step("Generating visualizations", step_start)
 
